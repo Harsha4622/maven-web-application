@@ -1,0 +1,30 @@
+node {
+    
+    def mavenhome = tool name: "maven 3.9.6"
+    
+    //checkout stage
+    stage ('checkout code'){
+    git branch: 'developement', credentialsId: 'd1bb5571-6918-4675-a78d-478c557c0d70', url: 'https://github.com/Harsha4622/maven-web-application.git'
+    }
+    
+    //build stage 
+    stage ('build'){
+        sh "$mavenhome/bin/mvn clean package" 
+         }
+         
+    //generate sonarqube report
+    stage ('sonarqubereport'){
+     sh "$mavenhome/bin/mvn sonar:sonar"
+    }
+    //upload artifact into artifactid
+    stage ('artifact into nexus'){
+         sh "$mavenhome/bin/mvn deploy"
+    }
+    //deploy into the tomcat server
+    stage ('deploy app into tomcat server'){
+        sshagent(['ddfeb6f2-3077-4655-bcb8-76463d08d225']){
+            sh "scp -o stricthostkeychecking=no target/maven-web-application.war ec2-user@13.233.99.145:/opt/apache-tomcat-9.0.85/webapps"
+    }
+    }
+    }//Node closing 
+        
